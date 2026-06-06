@@ -17,6 +17,12 @@ class Router {
   }
 
   navigate(name, params = {}) {
+    // ✅ Already on this view — just refresh data, don't re-trigger transition
+    if (this.currentView === name) {
+      if (name === 'dashboard') window.DashboardManager?.refresh();
+      return;
+    }
+
     if (this.beforeEach) {
       const shouldContinue = this.beforeEach(name, params);
       if (!shouldContinue) return;
@@ -37,12 +43,19 @@ class Router {
     if (!next) return;
 
     this.currentView = name;
-    next.style.display = '';
+    next.style.display = 'block';
     next.classList.add('view-enter');
     requestAnimationFrame(() => {
       next.classList.add('view-enter');
     });
     setTimeout(() => next.classList.remove('view-enter'), 500);
+
+    // Single consolidated dashboard refresh after transition completes
+    if (name === 'dashboard') {
+      setTimeout(() => {
+        window.DashboardManager?.refresh();
+      }, 300);
+    }
 
     // Update hash
     const hash = name === 'landing' ? '' : `#${name}`;
@@ -59,7 +72,13 @@ class Router {
     // Parse initial view from hash
     const hash = window.location.hash.replace('#', '');
     const initialView = hash && this.views[hash] ? hash : 'landing';
-    this.navigate(initialView);
+
+    // ✅ If already logged in and landing, go straight to dashboard
+    if (initialView === 'landing' && window.AuthManager?.isLoggedIn()) {
+      this.navigate('dashboard');
+    } else {
+      this.navigate(initialView);
+    }
 
     // Handle back/forward
     window.addEventListener('popstate', (e) => {
@@ -141,7 +160,6 @@ function initScrollAnimations() {
     entries.forEach(entry => {
       if (entry.isIntersecting) {
         entry.target.classList.add('in-view');
-        // Counter animation
         if (entry.target.dataset.counter) {
           const target = parseInt(entry.target.dataset.counter);
           const suffix = entry.target.dataset.suffix || '';
@@ -218,12 +236,20 @@ class App {
     });
 
     // Init modules
-    if (window.AuthManager)     window.AuthManager.init();
-    if (window.WizardManager)   window.WizardManager.init();
+    if (window.AuthManager)      window.AuthManager.init();
+    if (window.WizardManager)    window.WizardManager.init();
     if (window.DashboardManager) window.DashboardManager.init();
 
-    // Route guard: require API key before wizard
+    // ✅ Route guards
     this.router.beforeEach = (name) => {
+      // Require login to access dashboard
+      if (name === 'dashboard') {
+        if (!window.AuthManager?.isLoggedIn()) {
+          window.AuthManager?.showLogin();
+          return false;
+        }
+      }
+      // Require API key to access wizard
       if (name === 'wizard') {
         const apiKey = localStorage.getItem('idearoast_apikey');
         if (!apiKey) {
@@ -236,12 +262,22 @@ class App {
 
     this.router.init();
 
-    // Global nav events
+    // ✅ Single global nav handler — no duplicate dashboard block
     document.querySelectorAll('[data-nav]').forEach(el => {
       el.addEventListener('click', (e) => {
         e.preventDefault();
         this.router.navigate(el.dataset.nav);
       });
+    });
+
+    // ✅ Event delegation for data-nav inside dynamically rendered views
+    // (e.g. "← Back to Dashboard" in report.js is rendered after page load)
+    document.addEventListener('click', (e) => {
+      const navEl = e.target.closest('[data-nav]');
+      if (navEl && !navEl._navBound) {
+        e.preventDefault();
+        this.router.navigate(navEl.dataset.nav);
+      }
     });
 
     // Theme toggle
@@ -255,15 +291,6 @@ class App {
       btn.addEventListener('click', (e) => {
         e.preventDefault();
         this.router.navigate('wizard');
-      });
-    });
-
-    // Dashboard nav
-    document.querySelectorAll('[data-nav="dashboard"]').forEach(el => {
-      el.addEventListener('click', (e) => {
-        e.preventDefault();
-        this.router.navigate('dashboard');
-        if (window.DashboardManager) window.DashboardManager.refresh();
       });
     });
 
