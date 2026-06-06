@@ -1,0 +1,162 @@
+:root {
+  /* Fonts */
+  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-heading: 'Space Grotesk', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+
+  /* Literal Design Tokens - Light Mode values */
+  --bg-light: #f8fafc;
+  --bg-subtle-light: #f1f5f9;
+  --fg-light: #0f172a;
+  --fg-subtle-light: #475569;
+  --border-light: #e2e8f0;
+  --card-bg-light: #ffffff;
+  
+  /* Literal Design Tokens - Dark Mode values */
+  --bg-dark: #0b0f19;
+  --bg-subtle-dark: #131b2e;
+  --fg-dark: #f8fafc;
+  --fg-subtle-dark: #94a3b8;
+  --border-dark: #1e293b;
+  --card-bg-dark: #111827;
+  
+  /* Primary & Accent - Brand Colors */
+  --primary-light: #4f46e5;     /* Premium Indigo */
+  --primary-hover-light: #4338ca;
+  --primary-dark: #6366f1;
+  --primary-hover-dark: #4f46e5;
+  
+  --accent-light: #ea580c;      /* Roast Orange */
+  --accent-hover-light: #c2410c;
+  --accent-dark: #ff7849;
+  --accent-hover-dark: #ea580c;
+
+  --success-light: #10b981;     /* Emerald */
+  --success-dark: #34d399;
+  
+  --warning-light: #f59e0b;     /* Amber */
+  --warning-dark: #fbbf24;
+  
+  --danger-light: #ef4444;      /* Red */
+  --danger-dark: #f87171;
+
+  /* Resolve using light-dark() */
+  --bg: light-dark(var(--bg-light), var(--bg-dark));
+  --bg-subtle: light-dark(var(--bg-subtle-light), var(--bg-subtle-dark));
+  --fg: light-dark(var(--fg-light), var(--fg-dark));
+  --fg-subtle: light-dark(var(--fg-subtle-light), var(--fg-subtle-dark));
+  --border: light-dark(var(--border-light), var(--border-dark));
+  --card-bg: light-dark(var(--card-bg-light), var(--card-bg-dark));
+  
+  --primary: light-dark(var(--primary-light), var(--primary-dark));
+  --primary-hover: light-dark(var(--primary-hover-light), var(--primary-hover-dark));
+  --accent: light-dark(var(--accent-light), var(--accent-dark));
+  --accent-hover: light-dark(var(--accent-hover-light), var(--accent-hover-dark));
+  
+  --success: light-dark(var(--success-light), var(--success-dark));
+  --warning: light-dark(var(--warning-light), var(--warning-dark));
+  --danger: light-dark(var(--danger-light), var(--danger-dark));
+
+  /* Glassmorphism overlays */
+  --glass-bg: light-dark(rgba(255, 255, 255, 0.75), rgba(17, 24, 39, 0.75));
+  --glass-border: light-dark(rgba(226, 232, 240, 0.6), rgba(30, 41, 59, 0.6));
+  --glass-shadow: light-dark(rgba(79, 70, 229, 0.04), rgba(0, 0, 0, 0.4));
+
+  /* Scrollbars */
+  --scrollbar-thumb: light-dark(#cbd5e1, #334155);
+  --scrollbar-track: light-dark(#f1f5f9, #0f172a);
+
+  accent-color: var(--primary);
+  color-scheme: light dark;
+}
+
+/* Fallback for older browsers without light-dark() support */
+@supports not (color: light-dark(white, black)) {
+  :root {
+    --bg: var(--bg-light);
+    --bg-subtle: var(--bg-subtle-light);
+    --fg: var(--fg-light);
+    --fg-subtle: var(--fg-subtle-light);
+    --border: var(--border-light);
+    --card-bg: var(--card-bg-light);
+    --primary: var(--primary-light);
+    --primary-hover: var(--primary-hover-light);
+    --accent: var(--accent-light);
+    --accent-hover: var(--accent-hover-light);
+    --success: var(--success-light);
+    --warning: var(--warning-light);
+    --danger: var(--danger-light);
+    --glass-bg: rgba(255, 255, 255, 0.75);
+    --glass-border: rgba(226, 232, 240, 0.6);
+    --glass-shadow: rgba(79, 70, 229, 0.04);
+    --scrollbar-thumb: #cbd5e1;
+    --scrollbar-track: #f1f5f9;
+  }
+  
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: var(--bg-dark);
+      --bg-subtle: var(--bg-subtle-dark);
+      --fg: var(--fg-dark);
+      --fg-subtle: var(--fg-subtle-dark);
+      --border: var(--border-dark);
+      --card-bg: var(--card-bg-dark);
+      --primary: var(--primary-dark);
+      --primary-hover: var(--primary-hover-dark);
+      --accent: var(--accent-dark);
+      --accent-hover: var(--accent-hover-dark);
+      --success: var(--success-dark);
+      --warning: var(--warning-dark);
+      --danger: var(--danger-dark);
+      --glass-bg: rgba(17, 24, 39, 0.75);
+      --glass-border: rgba(30, 41, 59, 0.6);
+      --glass-shadow: rgba(0, 0, 0, 0.4);
+      --scrollbar-thumb: #334155;
+      --scrollbar-track: #0f172a;
+    }
+  }
+}
+
+/* Explicit data-theme selectors overrides */
+html[data-theme="light"] {
+  color-scheme: light;
+  --bg: var(--bg-light);
+  --bg-subtle: var(--bg-subtle-light);
+  --fg: var(--fg-light);
+  --fg-subtle: var(--fg-subtle-light);
+  --border: var(--border-light);
+  --card-bg: var(--card-bg-light);
+  --primary: var(--primary-light);
+  --primary-hover: var(--primary-hover-light);
+  --accent: var(--accent-light);
+  --accent-hover: var(--accent-hover-light);
+  --success: var(--success-light);
+  --warning: var(--warning-light);
+  --danger: var(--danger-light);
+  --glass-bg: rgba(255, 255, 255, 0.75);
+  --glass-border: rgba(226, 232, 240, 0.6);
+  --glass-shadow: rgba(79, 70, 229, 0.04);
+  --scrollbar-thumb: #cbd5e1;
+  --scrollbar-track: #f1f5f9;
+}
+
+html[data-theme="dark"] {
+  color-scheme: dark;
+  --bg: var(--bg-dark);
+  --bg-subtle: var(--bg-subtle-dark);
+  --fg: var(--fg-dark);
+  --fg-subtle: var(--fg-subtle-dark);
+  --border: var(--border-dark);
+  --card-bg: var(--card-bg-dark);
+  --primary: var(--primary-dark);
+  --primary-hover: var(--primary-hover-dark);
+  --accent: var(--accent-dark);
+  --accent-hover: var(--accent-hover-dark);
+  --success: var(--success-dark);
+  --warning: var(--warning-dark);
+  --danger: var(--danger-dark);
+  --glass-bg: rgba(17, 24, 39, 0.75);
+  --glass-border: rgba(30, 41, 59, 0.6);
+  --glass-shadow: rgba(0, 0, 0, 0.4);
+  --scrollbar-thumb: #334155;
+  --scrollbar-track: #0f172a;
+}

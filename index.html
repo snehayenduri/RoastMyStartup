@@ -1,0 +1,943 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>IdeaRoast AI — Get Brutally Honest Feedback on Your Startup Idea</title>
+  <meta name="description" content="IdeaRoast AI is an AI-powered startup validation platform. Get a structured, brutally honest report on your startup idea in minutes.">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🔥</text></svg>">
+
+  <!-- Stylesheets -->
+  <link rel="stylesheet" href="css/base.css">
+  <link rel="stylesheet" href="css/layout.css">
+  <link rel="stylesheet" href="css/components.css">
+  <link rel="stylesheet" href="css/animations.css">
+  <link rel="stylesheet" href="css/report.css">
+
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+  <!-- html2pdf -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+
+  <style>
+    .hidden { display: none !important; }
+    .view-container { position: relative; }
+
+    /* Hero */
+    .hero-section {
+      min-height: calc(100vh - 64px);
+      display: flex; align-items: center;
+      padding: var(--space-20) 0;
+      position: relative; overflow: hidden;
+    }
+    .hero-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: var(--space-16); align-items: center;
+    }
+    @media (max-width: 1024px) {
+      .hero-grid { grid-template-columns: 1fr; gap: var(--space-12); }
+      .hero-float-card { max-width: 480px; margin: 0 auto; }
+    }
+
+    /* Floating hero card */
+    .hero-float-card {
+      background: rgba(255,255,255,0.02);
+      backdrop-filter: blur(24px);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: var(--radius-xl);
+      padding: var(--space-6);
+      box-shadow: 0 40px 80px rgba(0,0,0,0.5), 0 0 0 1px rgba(99,102,241,0.1);
+      animation: float 6s ease-in-out infinite;
+    }
+    [data-theme="light"] .hero-float-card {
+      background: rgba(255,255,255,0.9);
+      border-color: rgba(0,0,0,0.08);
+      box-shadow: 0 20px 60px rgba(0,0,0,0.12);
+    }
+
+    .hero-metrics {
+      display: grid; grid-template-columns: 1fr 1fr;
+      gap: var(--space-3); margin: var(--space-5) 0;
+    }
+    .hero-metric {
+      background: rgba(255,255,255,0.02);
+      border: 1px solid rgba(255,255,255,0.05);
+      border-radius: var(--radius-sm); padding: var(--space-3);
+    }
+    [data-theme="light"] .hero-metric {
+      background: rgba(0,0,0,0.03); border-color: rgba(0,0,0,0.06);
+    }
+    .hero-metric-label { font-size: 11px; color: var(--text-muted); margin-bottom: 4px; }
+    .hero-metric-value { font-size: 22px; font-weight: 800; letter-spacing: -0.03em; }
+
+    /* Cards */
+    .perspective-card {
+      background: var(--bg-card); border: 1px solid var(--border);
+      border-radius: var(--radius-lg); padding: var(--space-5);
+      transition: all var(--transition-base);
+    }
+    .perspective-card:hover {
+      transform: translateY(-4px);
+      border-color: rgba(99,102,241,0.25);
+      box-shadow: var(--shadow-glow-sm);
+    }
+    .perspective-emoji { font-size: 28px; margin-bottom: var(--space-3); }
+    .perspective-name { font-size: 14px; font-weight: 700; color: var(--text-primary); margin-bottom: var(--space-2); }
+    .perspective-desc { font-size: 12px; color: var(--text-muted); line-height: var(--leading-relaxed); }
+
+    .step-card {
+      background: var(--bg-card); border: 1px solid var(--border);
+      border-radius: var(--radius-lg); padding: var(--space-8);
+      transition: all var(--transition-base);
+    }
+    .step-card:hover { border-color: rgba(99,102,241,0.25); transform: translateY(-3px); }
+    .step-number {
+      width: 42px; height: 42px; border-radius: var(--radius-sm);
+      background: var(--bg-elevated); border: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 14px; font-weight: 700; color: var(--text-secondary);
+      margin-bottom: var(--space-5);
+    }
+    .step-card:hover .step-number { border-color: rgba(99,102,241,0.3); color: var(--brand-primary); }
+
+    /* Trust strip */
+    .trust-strip {
+      border-top: 1px solid var(--border); border-bottom: 1px solid var(--border);
+      background: rgba(255,255,255,0.01); padding: var(--space-12) 0;
+    }
+
+    /* Sample report */
+    .sample-report {
+      background: var(--bg-card); border: 1px solid var(--border);
+      border-radius: var(--radius-xl); overflow: hidden; box-shadow: var(--shadow-lg);
+    }
+    .sample-report-header {
+      background: var(--bg-elevated); border-bottom: 1px solid var(--border);
+      padding: var(--space-5) var(--space-6);
+      display: flex; align-items: center; justify-content: space-between;
+      gap: var(--space-4); flex-wrap: wrap;
+    }
+    .sample-report-body { padding: var(--space-6); }
+    .sample-bar-row { margin-bottom: var(--space-4); }
+    .sample-bar-header { display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 6px; }
+    .sample-bar-track { height: 6px; background: var(--border); border-radius: var(--radius-full); overflow: hidden; }
+    .sample-bar-fill { height: 100%; border-radius: var(--radius-full); }
+
+    /* CTA */
+    .cta-section-inner {
+      background: var(--bg-card); border: 1px solid var(--border);
+      border-radius: var(--radius-xl); padding: var(--space-20);
+      text-align: center; position: relative; overflow: hidden;
+    }
+    .cta-section-inner::before {
+      content: ''; position: absolute; top: -100px; left: 50%; transform: translateX(-50%);
+      width: 400px; height: 400px;
+      background: radial-gradient(ellipse, rgba(99,102,241,0.1), transparent 70%);
+      pointer-events: none;
+    }
+    @media (max-width: 768px) { .cta-section-inner { padding: var(--space-12) var(--space-6); } }
+
+    /* User dropdown */
+    #user-dropdown {
+      position: absolute; top: calc(100% + 8px); right: 0;
+      background: var(--bg-elevated); border: 1px solid var(--border);
+      border-radius: var(--radius-md); padding: var(--space-2);
+      min-width: 180px; box-shadow: var(--shadow-lg); display: none;
+    }
+    #user-dropdown.visible { display: block; }
+    #nav-user-chip { position: relative; }
+    .dropdown-item {
+      display: flex; align-items: center; gap: var(--space-3);
+      padding: var(--space-2) var(--space-3); font-size: 13px;
+      color: var(--text-secondary); border-radius: var(--radius-xs);
+      cursor: pointer; transition: all var(--transition-fast);
+    }
+    .dropdown-item:hover { background: var(--bg-card); color: var(--text-primary); }
+
+    /* Wizard */
+    #view-wizard {
+      min-height: 100vh; background: var(--bg-base);
+      padding: var(--space-10) 0 var(--space-20);
+    }
+    .wizard-container { max-width: 700px; margin: 0 auto; padding: 0 var(--space-6); }
+    .wizard-header { text-align: center; margin-bottom: var(--space-10); }
+
+    #wizard-generating { display: none; padding: var(--space-20) var(--space-6); text-align: center; }
+
+    /* Dashboard */
+    #dashboard-idea-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: var(--space-5);
+    }
+  </style>
+</head>
+<body>
+
+<!-- Ambient Background -->
+<div class="ambient-blob ambient-blob-1" aria-hidden="true"></div>
+<div class="ambient-blob ambient-blob-2" aria-hidden="true"></div>
+
+<!-- Toasts -->
+<div id="toast-container" aria-live="polite"></div>
+
+<!-- ===== NAVIGATION ===== -->
+<header role="banner">
+  <nav id="main-nav" role="navigation" aria-label="Main navigation">
+    <div class="container nav-inner">
+      <a href="#" class="nav-logo" data-nav="landing">
+        <div class="nav-logo-icon">🔥</div>
+        <span class="nav-logo-text">IdeaRoast <span>AI</span></span>
+      </a>
+
+      <div class="nav-links">
+        <a href="#" onclick="event.preventDefault();document.getElementById('section-how-it-works')?.scrollIntoView({behavior:'smooth'})">How It Works</a>
+        <a href="#" onclick="event.preventDefault();document.getElementById('section-perspectives')?.scrollIntoView({behavior:'smooth'})">AI Agents</a>
+        <a href="#" onclick="event.preventDefault();document.getElementById('section-pricing')?.scrollIntoView({behavior:'smooth'})">Pricing</a>
+        <a href="#" data-nav="dashboard">Dashboard</a>
+      </div>
+
+      <div class="nav-actions">
+        <button class="theme-toggle" id="theme-toggle" aria-label="Toggle theme">
+          <span id="theme-icon">☀️</span>
+        </button>
+        <div id="nav-auth-buttons" class="flex gap-3 items-center">
+          <button class="btn btn-ghost btn-sm" id="btn-login">Sign In</button>
+          <button class="btn btn-primary btn-sm" id="btn-signup">Get Started Free</button>
+        </div>
+        <div id="nav-user-chip" class="user-avatar-chip hidden" role="button" tabindex="0">
+          <div class="user-avatar" id="nav-user-avatar">?</div>
+          <span class="user-name" id="nav-user-name">User</span>
+          <span style="color:var(--text-muted);font-size:10px;">▾</span>
+          <div id="user-dropdown" role="menu">
+            <div class="dropdown-item" data-nav="dashboard" role="menuitem">📊 Dashboard</div>
+            <div class="dropdown-item" id="nav-user-logout" role="menuitem">🚪 Sign Out</div>
+          </div>
+        </div>
+        <button class="nav-hamburger" id="nav-hamburger" aria-label="Toggle mobile menu">
+          <span></span><span></span><span></span>
+        </button>
+      </div>
+    </div>
+  </nav>
+
+  <div id="mobile-nav-drawer" role="dialog" aria-label="Mobile navigation">
+    <a href="#" onclick="event.preventDefault();document.getElementById('section-how-it-works')?.scrollIntoView({behavior:'smooth'})">How It Works</a>
+    <a href="#" onclick="event.preventDefault();document.getElementById('section-perspectives')?.scrollIntoView({behavior:'smooth'})">AI Agents</a>
+    <a href="#" onclick="event.preventDefault();document.getElementById('section-pricing')?.scrollIntoView({behavior:'smooth'})">Pricing</a>
+    <a href="#" data-nav="dashboard">Dashboard</a>
+    <button class="btn btn-primary w-full" style="margin-top:var(--space-3);" id="btn-signup-mobile">Get Started Free</button>
+    <button class="btn btn-ghost w-full" id="btn-login-mobile">Sign In</button>
+  </div>
+</header>
+
+<!-- ===== APP VIEWS ===== -->
+<main id="app">
+
+<!-- ===== VIEW: LANDING ===== -->
+<div id="view-landing" class="view-container page-wrapper">
+
+  <!-- Hero -->
+  <section class="hero-section" aria-labelledby="hero-headline">
+    <div class="container">
+      <div class="hero-grid">
+        <div class="stagger-children">
+          <span class="badge badge-brand badge-dot" style="margin-bottom:var(--space-5);display:inline-flex;">v2.4 Agent Architecture</span>
+          <h1 id="hero-headline" class="text-display" style="color:var(--text-primary);">
+            Get Brutally Honest<br>
+            <span class="gradient-text">Startup Validation</span><br>
+            Before You Build
+          </h1>
+          <p class="text-body text-secondary" style="max-width:520px;margin-top:var(--space-5);">
+            IdeaRoast AI acts like a seasoned VC, gritty founder, and ruthless critic simultaneously.
+            Get a structured 10-section report in under 3 minutes.
+          </p>
+          <div class="flex gap-4 flex-wrap" style="margin-top:var(--space-8);">
+            <button class="btn btn-primary btn-xl" data-cta="roast">🔥 Roast My Idea</button>
+            <a class="btn btn-ghost btn-xl" href="#" onclick="event.preventDefault();document.getElementById('section-demo')?.scrollIntoView({behavior:'smooth'})">
+              See Example Report
+            </a>
+          </div>
+          <p class="text-sm text-muted" style="margin-top:var(--space-4);">3 free roasts · No credit card · Results in 3 minutes</p>
+        </div>
+
+        <div>
+          <div class="hero-float-card">
+            <div class="flex items-center justify-between" style="padding-bottom:var(--space-4);margin-bottom:var(--space-4);border-bottom:1px solid var(--border);">
+              <div class="flex gap-2">
+                <div style="width:10px;height:10px;border-radius:50%;background:#EF4444;opacity:0.7;"></div>
+                <div style="width:10px;height:10px;border-radius:50%;background:#F59E0B;opacity:0.7;"></div>
+                <div style="width:10px;height:10px;border-radius:50%;background:#10B981;opacity:0.7;"></div>
+              </div>
+              <span class="text-mono text-muted">REPORT_ID: #4829-F</span>
+            </div>
+            <div style="margin-bottom:var(--space-4);">
+              <div class="text-label text-muted" style="margin-bottom:4px;">Project Under Review</div>
+              <div class="text-h4 text-primary">AI-Powered B2B Dev Automation</div>
+            </div>
+            <div class="hero-metrics">
+              <div class="hero-metric">
+                <div class="hero-metric-label">Overall Score</div>
+                <div class="hero-metric-value" style="color:var(--color-caution);">72<span style="font-size:13px;font-weight:400;color:var(--text-muted)">/100</span></div>
+              </div>
+              <div class="hero-metric">
+                <div class="hero-metric-label">Market Score</div>
+                <div class="hero-metric-value" style="color:var(--brand-primary);">84%</div>
+              </div>
+              <div class="hero-metric">
+                <div class="hero-metric-label">Rev. Potential</div>
+                <div class="hero-metric-value" style="color:var(--color-go);font-size:18px;">High</div>
+              </div>
+              <div class="hero-metric" style="display:flex;align-items:center;justify-content:center;">
+                <span class="badge badge-caution">⚡ GO WITH CHANGES</span>
+              </div>
+            </div>
+            <div>
+              <div class="text-label text-muted" style="margin-bottom:var(--space-3);">Live Agent Consensus</div>
+              <div style="display:flex;flex-direction:column;gap:var(--space-2);">
+                <div style="background:rgba(255,255,255,0.02);border:1px solid var(--border);border-radius:var(--radius-sm);padding:var(--space-3);font-size:12px;color:var(--text-secondary);">
+                  <strong style="color:var(--text-primary);">🔥 Critic:</strong> Engineering costs are hand-waved. Profitability unrealistic before Year 3.
+                </div>
+                <div style="background:rgba(255,255,255,0.02);border:1px solid var(--border);border-radius:var(--radius-sm);padding:var(--space-3);font-size:12px;color:var(--text-secondary);">
+                  <strong style="color:var(--text-primary);">💰 VC:</strong> High LTV market, but CAC playbook relies on organic word-of-mouth. Unrealistic.
+                </div>
+                <div style="background:rgba(255,255,255,0.02);border:1px solid var(--border);border-radius:var(--radius-sm);padding:var(--space-3);font-size:12px;color:var(--text-secondary);">
+                  <strong style="color:var(--text-primary);">🚀 Founder:</strong> Good timing. MVP scope too large for 6-month runway. Cut 60%.
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Trust Strip -->
+  <div class="trust-strip">
+    <div class="container">
+      <div class="grid-4">
+        <div style="text-align:center;">
+          <div class="stat-number text-primary" data-counter="50000" data-suffix="+" id="counter-ideas">0+</div>
+          <div class="stat-label">Ideas Analyzed</div>
+        </div>
+        <div style="text-align:center;">
+          <div class="stat-number" style="color:var(--brand-primary);" data-counter="87" data-suffix="%" id="counter-accuracy">0%</div>
+          <div class="stat-label">Validation Accuracy</div>
+        </div>
+        <div style="text-align:center;">
+          <div class="stat-number text-primary" data-counter="5" id="counter-agents">0</div>
+          <div class="stat-label">AI Perspectives</div>
+        </div>
+        <div style="text-align:center;">
+          <div class="stat-number" style="color:var(--brand-accent);">3 Min</div>
+          <div class="stat-label">Time to Verdict</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- How It Works -->
+  <section class="section" id="section-how-it-works" aria-labelledby="how-title">
+    <div class="container">
+      <div class="section-header">
+        <span class="section-eyebrow scroll-reveal">The Process</span>
+        <h2 id="how-title" class="text-h2 text-primary scroll-reveal" style="margin-top:var(--space-3);">Three steps to total clarity.</h2>
+        <p class="text-body text-secondary scroll-reveal" style="margin-top:var(--space-4);">No fluff. No echo chambers. Just structured, data-driven startup validation.</p>
+      </div>
+      <div class="grid-3 stagger-children">
+        <div class="step-card">
+          <div class="step-number">01</div>
+          <h3 class="text-h4 text-primary" style="margin-bottom:var(--space-3);">Submit Your Idea</h3>
+          <p class="text-sm text-secondary">Describe your startup hypothesis, target persona, and monetization model through our structured 3-step input framework.</p>
+          <div style="margin-top:var(--space-5);display:flex;gap:var(--space-2);flex-wrap:wrap;">
+            <span class="badge badge-brand">Problem</span>
+            <span class="badge badge-brand">Market</span>
+            <span class="badge badge-brand">Revenue</span>
+          </div>
+        </div>
+        <div class="step-card" style="border-color:rgba(99,102,241,0.2);background:linear-gradient(160deg,rgba(99,102,241,0.05),var(--bg-card));">
+          <div class="step-number" style="border-color:rgba(99,102,241,0.3);color:var(--brand-primary);">02</div>
+          <h3 class="text-h4 text-primary" style="margin-bottom:var(--space-3);">AI Multi-Agent Review</h3>
+          <p class="text-sm text-secondary">5 specialized AI personas battle to cross-examine your assumptions from every angle — VC, founder, customer, marketer, and critic.</p>
+          <div style="margin-top:var(--space-5);display:flex;gap:var(--space-2);flex-wrap:wrap;">
+            <span class="badge badge-brand">💰 VC</span>
+            <span class="badge badge-brand">🔥 Critic</span>
+            <span class="badge badge-brand">🚀 Founder</span>
+          </div>
+        </div>
+        <div class="step-card">
+          <div class="step-number">03</div>
+          <h3 class="text-h4 text-primary" style="margin-bottom:var(--space-3);">Get Your Verdict</h3>
+          <p class="text-sm text-secondary">Receive a full 10-section report with a data-driven verdict: <strong class="text-go">GO</strong>, <strong class="text-caution">GO WITH CHANGES</strong>, or <strong class="text-stop">DON'T BUILD</strong>.</p>
+          <div style="margin-top:var(--space-5);display:flex;gap:var(--space-2);flex-wrap:wrap;">
+            <span class="badge badge-go">✅ GO</span>
+            <span class="badge badge-caution">⚡ Changes</span>
+            <span class="badge badge-stop">🛑 Stop</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- AI Perspectives -->
+  <section class="section-sm" id="section-perspectives" style="border-top:1px solid var(--border);" aria-labelledby="perspectives-title">
+    <div class="container">
+      <div class="section-header">
+        <span class="section-eyebrow" style="color:var(--brand-accent);">The Council</span>
+        <h2 id="perspectives-title" class="text-h2 text-primary" style="margin-top:var(--space-3);">Five autonomous viewpoints. Zero mercy.</h2>
+      </div>
+      <div class="grid-5 stagger-children">
+        <div class="perspective-card scroll-reveal">
+          <div class="perspective-emoji">💰</div>
+          <div class="perspective-name">Venture Capitalist</div>
+          <p class="perspective-desc">Evaluates TAM, fundability, defensive moats, and potential 100x exit architecture.</p>
+        </div>
+        <div class="perspective-card scroll-reveal">
+          <div class="perspective-emoji">🎓</div>
+          <div class="perspective-name">YC Partner</div>
+          <p class="perspective-desc">Tests whether you're solving a real problem and whether people actually want it.</p>
+        </div>
+        <div class="perspective-card scroll-reveal">
+          <div class="perspective-emoji">📋</div>
+          <div class="perspective-name">Product Manager</div>
+          <p class="perspective-desc">Probes product-market fit, feature prioritization, execution risk, and user journeys.</p>
+        </div>
+        <div class="perspective-card scroll-reveal">
+          <div class="perspective-emoji">👨‍💻</div>
+          <div class="perspective-name">Experienced Founder</div>
+          <p class="perspective-desc">Tests execution complexity, MVP timeline, and operational friction from hard-won experience.</p>
+        </div>
+        <div class="perspective-card scroll-reveal">
+          <div class="perspective-emoji">🔥</div>
+          <div class="perspective-name">Brutal Critic</div>
+          <p class="perspective-desc">A merciless skeptic designed to find systemic flaws, market fallacies, and weak assumptions.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Sample Report -->
+  <section class="section" id="section-demo" style="border-top:1px solid var(--border);" aria-labelledby="demo-title">
+    <div class="container container-sm">
+      <div class="section-header">
+        <span class="section-eyebrow">Example Report</span>
+        <h2 id="demo-title" class="text-h2 text-primary" style="margin-top:var(--space-3);">The anatomy of a premium analysis.</h2>
+      </div>
+      <div class="sample-report scroll-reveal">
+        <div class="sample-report-header">
+          <div>
+            <div class="text-label" style="color:var(--brand-primary);margin-bottom:4px;">PROJECT ROAST DEBRIEF</div>
+            <h3 class="text-h3 text-primary">SaaS Omnichannel CRM Layer</h3>
+          </div>
+          <div style="display:flex;align-items:center;gap:var(--space-4);">
+            <div style="text-align:right;">
+              <div class="text-xs text-muted">Final Score</div>
+              <div style="font-size:32px;font-weight:800;letter-spacing:-0.04em;color:var(--text-primary);">72<span style="font-size:14px;font-weight:400;color:var(--text-muted)">/100</span></div>
+            </div>
+            <span class="badge badge-caution">⚡ GO WITH CHANGES</span>
+          </div>
+        </div>
+        <div class="sample-report-body">
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--space-6);">
+            <div>
+              <div class="sample-bar-row">
+                <div class="sample-bar-header"><span class="text-secondary">Market Opportunity</span><span class="text-brand">84%</span></div>
+                <div class="sample-bar-track"><div class="sample-bar-fill" style="background:linear-gradient(90deg,var(--brand-primary),var(--brand-accent));width:84%;"></div></div>
+              </div>
+              <div class="sample-bar-row">
+                <div class="sample-bar-header"><span class="text-secondary">Revenue Potential</span><span class="text-go">78%</span></div>
+                <div class="sample-bar-track"><div class="sample-bar-fill" style="background:linear-gradient(90deg,var(--color-go),#34D399);width:78%;"></div></div>
+              </div>
+            </div>
+            <div>
+              <div class="sample-bar-row">
+                <div class="sample-bar-header"><span class="text-secondary">Execution Complexity</span><span class="text-accent">52%</span></div>
+                <div class="sample-bar-track"><div class="sample-bar-fill" style="background:linear-gradient(90deg,var(--brand-accent),#C084FC);width:52%;"></div></div>
+              </div>
+              <div class="sample-bar-row">
+                <div class="sample-bar-header"><span class="text-secondary">Competitive Threat</span><span class="text-stop">91%</span></div>
+                <div class="sample-bar-track"><div class="sample-bar-fill" style="background:linear-gradient(90deg,var(--color-stop),#F87171);width:91%;"></div></div>
+              </div>
+            </div>
+          </div>
+          <div style="margin-top:var(--space-6);padding-top:var(--space-6);border-top:1px solid var(--border);display:grid;grid-template-columns:1fr 1fr;gap:var(--space-5);">
+            <div style="background:rgba(16,185,129,0.04);border:1px solid rgba(16,185,129,0.12);border-radius:var(--radius-md);padding:var(--space-4);">
+              <div style="font-size:13px;font-weight:700;color:var(--color-go);margin-bottom:var(--space-2);">🐂 The Bull Case</div>
+              <p class="text-sm text-secondary">If enterprise migration velocity hits 15% above model assumptions, net revenue reaches $2.1M ARR within 14 months.</p>
+            </div>
+            <div style="background:rgba(239,68,68,0.04);border:1px solid rgba(239,68,68,0.12);border-radius:var(--radius-md);padding:var(--space-4);">
+              <div style="font-size:13px;font-weight:700;color:var(--color-stop);margin-bottom:var(--space-2);">🔥 The Brutal Roast</div>
+              <p class="text-sm text-secondary">You're entering a red-ocean dominated by tech giants. "Cleaner UI" is not a defensible moat. Fix distribution immediately.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div style="text-align:center;margin-top:var(--space-8);">
+        <button class="btn btn-primary btn-lg" data-cta="roast">Get Your Full Report 🔥</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- Testimonials -->
+  <section class="section" style="border-top:1px solid var(--border);" aria-labelledby="testimonials-title">
+    <div class="container">
+      <div class="section-header">
+        <span class="section-eyebrow">Founder Testimonials</span>
+        <h2 id="testimonials-title" class="text-h2 text-primary" style="margin-top:var(--space-3);">Built for founders who reject echo chambers.</h2>
+      </div>
+      <div class="grid-3 stagger-children">
+        <div class="testimonial-card scroll-reveal">
+          <div class="testimonial-stars">★★★★★</div>
+          <p class="testimonial-text">"The AI Critic called out a catastrophic structural flaw in our API integration strategy. It saved us four months of useless feature work. Absolutely mental tool."</p>
+          <div class="testimonial-author">
+            <div class="testimonial-avatar" style="background:linear-gradient(135deg,var(--brand-primary),var(--brand-accent));">AM</div>
+            <div>
+              <div class="testimonial-name">Aris Malakov</div>
+              <div class="testimonial-role">Founder, Synthetix.io</div>
+            </div>
+          </div>
+        </div>
+        <div class="testimonial-card scroll-reveal">
+          <div class="testimonial-stars">★★★★★</div>
+          <p class="testimonial-text">"Instead of yes-man advice, this ran realistic multi-perspective venture calculations. It feels like pitching to an honest board of experts with actual skin in the game."</p>
+          <div class="testimonial-author">
+            <div class="testimonial-avatar" style="background:linear-gradient(135deg,#10B981,var(--brand-primary));">EC</div>
+            <div>
+              <div class="testimonial-name">Elena Coyle</div>
+              <div class="testimonial-role">CTO, OmniFlow Architecture</div>
+            </div>
+          </div>
+        </div>
+        <div class="testimonial-card scroll-reveal">
+          <div class="testimonial-stars">★★★★★</div>
+          <p class="testimonial-text">"The Roaster ripped apart our CAC metrics. Painful to read, 100% accurate. We pivoted our distribution and hit $40k MRR within 4 months. Paid for itself 50x over."</p>
+          <div class="testimonial-author">
+            <div class="testimonial-avatar" style="background:linear-gradient(135deg,#F59E0B,#EF4444);">JH</div>
+            <div>
+              <div class="testimonial-name">Julian Hayes</div>
+              <div class="testimonial-role">Co-Founder, KernelPay</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Pricing -->
+  <section class="section" id="section-pricing" style="border-top:1px solid var(--border);" aria-labelledby="pricing-title">
+    <div class="container">
+      <div class="section-header">
+        <span class="section-eyebrow" style="color:var(--brand-accent);">Pricing</span>
+        <h2 id="pricing-title" class="text-h2 text-primary" style="margin-top:var(--space-3);">Simple, transparent pricing.</h2>
+        <p class="text-body text-secondary" style="margin-top:var(--space-4);">Start free. Upgrade when you're ready to go unlimited.</p>
+      </div>
+      <div class="pricing-grid">
+        <div class="pricing-card">
+          <div>
+            <div class="pricing-tier">Free</div>
+            <div class="pricing-price" style="margin-top:var(--space-2);">$0 <span>/ forever</span></div>
+            <p class="pricing-desc" style="margin-top:var(--space-3);">Explore the platform and validate your first few ideas.</p>
+          </div>
+          <div class="pricing-divider"></div>
+          <ul class="pricing-features">
+            <li class="pricing-feature"><span class="pricing-feature-icon">✅</span> 3 startup roasts / month</li>
+            <li class="pricing-feature"><span class="pricing-feature-icon">✅</span> Full 10-section report</li>
+            <li class="pricing-feature"><span class="pricing-feature-icon">✅</span> Basic scorecard</li>
+            <li class="pricing-feature locked"><span class="pricing-feature-icon">🔒</span> Dashboard and history</li>
+            <li class="pricing-feature locked"><span class="pricing-feature-icon">🔒</span> PDF export</li>
+          </ul>
+          <button class="btn btn-ghost btn-lg w-full" data-cta="roast">Start for Free</button>
+        </div>
+        <div class="pricing-card featured">
+          <div class="pricing-badge-popular">Most Popular</div>
+          <div>
+            <div class="pricing-tier" style="color:var(--brand-primary);">Pro</div>
+            <div class="pricing-price" style="margin-top:var(--space-2);">$49 <span>/ month</span></div>
+            <p class="pricing-desc" style="margin-top:var(--space-3);">For serious founders and serial builders.</p>
+          </div>
+          <div class="pricing-divider" style="background:rgba(99,102,241,0.15);"></div>
+          <ul class="pricing-features">
+            <li class="pricing-feature"><span class="pricing-feature-icon">✅</span> <strong>Unlimited</strong> roasts</li>
+            <li class="pricing-feature"><span class="pricing-feature-icon">✅</span> All 5 AI personalities</li>
+            <li class="pricing-feature"><span class="pricing-feature-icon">✅</span> Dashboard and history</li>
+            <li class="pricing-feature"><span class="pricing-feature-icon">✅</span> PDF export and sharing</li>
+            <li class="pricing-feature"><span class="pricing-feature-icon">✅</span> Ideas comparison</li>
+            <li class="pricing-feature"><span class="pricing-feature-icon">✅</span> Priority processing</li>
+          </ul>
+          <button class="btn btn-primary btn-lg w-full" data-cta="roast">Get Pro Access</button>
+        </div>
+        <div class="pricing-card">
+          <div>
+            <div class="pricing-tier">Team</div>
+            <div class="pricing-price" style="margin-top:var(--space-2);">$149 <span>/ month</span></div>
+            <p class="pricing-desc" style="margin-top:var(--space-3);">For venture studios and startup teams.</p>
+          </div>
+          <div class="pricing-divider"></div>
+          <ul class="pricing-features">
+            <li class="pricing-feature"><span class="pricing-feature-icon">✅</span> Everything in Pro</li>
+            <li class="pricing-feature"><span class="pricing-feature-icon">✅</span> Up to 5 team members</li>
+            <li class="pricing-feature"><span class="pricing-feature-icon">✅</span> Shared workspace</li>
+            <li class="pricing-feature"><span class="pricing-feature-icon">✅</span> Competitor deep-dive</li>
+            <li class="pricing-feature"><span class="pricing-feature-icon">✅</span> Pitch deck blueprint</li>
+          </ul>
+          <button class="btn btn-ghost btn-lg w-full" data-cta="roast">Start Team Trial</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Final CTA -->
+  <section class="section">
+    <div class="container container-sm">
+      <div class="cta-section-inner scroll-reveal">
+        <h2 class="text-display text-primary" style="position:relative;z-index:1;">Stop Building Blind.</h2>
+        <p class="text-body text-secondary" style="max-width:460px;margin:var(--space-5) auto 0;position:relative;z-index:1;">
+          Validate before you dedicate. Protect your most finite resource: your own timeline.
+        </p>
+        <div style="margin-top:var(--space-8);position:relative;z-index:1;">
+          <button class="btn btn-white btn-xl" data-cta="roast">🔥 Roast My Startup Idea</button>
+        </div>
+        <p class="text-xs text-muted" style="margin-top:var(--space-4);position:relative;z-index:1;">Join 50,000+ founders who validated before they built</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="footer" role="contentinfo">
+    <div class="container">
+      <div class="footer-inner">
+        <div class="flex items-center gap-3">
+          <div style="width:24px;height:24px;border-radius:6px;background:var(--bg-card);display:flex;align-items:center;justify-content:center;font-size:12px;">🔥</div>
+          <span class="text-sm text-muted">© 2026 IdeaRoast AI Inc.</span>
+        </div>
+        <div class="footer-links">
+          <a href="#">Privacy</a>
+          <a href="#">Terms</a>
+          <a href="#">Security</a>
+        </div>
+      </div>
+    </div>
+  </footer>
+</div><!-- /view-landing -->
+
+<!-- ===== VIEW: WIZARD ===== -->
+<div id="view-wizard" class="view-container" style="display:none;">
+  <!-- Generating Overlay -->
+  <div id="wizard-generating">
+    <div style="font-size:48px;animation:flicker 2s ease-in-out infinite;">🔥</div>
+    <h2 class="text-h2 text-primary" style="margin-top:var(--space-6);">Roasting Your Idea...</h2>
+    <p class="text-sm text-muted report-loading-status" style="margin-top:var(--space-3);">Analyzing market landscape...</p>
+    <div style="max-width:320px;margin:var(--space-6) auto 0;">
+      <div class="progress-track">
+        <div class="progress-track-fill" style="width:0%;"></div>
+      </div>
+    </div>
+    <p class="text-xs text-muted" style="margin-top:var(--space-4);">This takes 20–40 seconds. Please don't close the tab.</p>
+  </div>
+
+  <!-- Form Area -->
+  <div id="wizard-form-area" class="wizard-container">
+    <div class="wizard-header">
+      <button class="report-back-btn" id="wizard-cancel-btn" style="margin-bottom:var(--space-5);">← Back to Home</button>
+      <h1 class="text-h2 text-primary">Submit Your Startup Idea</h1>
+      <p class="text-sm text-secondary" style="margin-top:var(--space-2);">Answer honestly. The AI will be brutally honest back.</p>
+    </div>
+
+    <!-- Step Indicator -->
+    <nav class="wizard-steps" aria-label="Form progress" style="margin-bottom:var(--space-10);">
+      <div class="wizard-step-item">
+        <div class="wizard-step-bubble active" id="step-bubble-1" aria-current="step">1
+          <span class="wizard-step-label" id="step-label-1">Idea Basics</span>
+        </div>
+      </div>
+      <div class="wizard-step-connector" id="step-connector-1"></div>
+      <div class="wizard-step-item">
+        <div class="wizard-step-bubble" id="step-bubble-2">2
+          <span class="wizard-step-label" id="step-label-2">Context</span>
+        </div>
+      </div>
+      <div class="wizard-step-connector" id="step-connector-2"></div>
+      <div class="wizard-step-item">
+        <div class="wizard-step-bubble" id="step-bubble-3">3
+          <span class="wizard-step-label" id="step-label-3">Roast Level</span>
+        </div>
+      </div>
+    </nav>
+
+    <!-- Step 1 -->
+    <div id="wizard-step-1" class="view-container">
+      <div class="wizard-panel-title">Tell us about your idea</div>
+      <p class="wizard-panel-subtitle">The more specific you are, the better the feedback.</p>
+      <div class="wizard-form-grid">
+        <div class="form-group span-full">
+          <label class="form-label" for="field-startupName">Startup Name <span class="required">*</span></label>
+          <input class="form-input" type="text" id="field-startupName" name="startupName" placeholder="e.g. Notion, Stripe, Figma" autocomplete="off">
+          <span class="form-error" data-error="startupName"></span>
+        </div>
+        <div class="form-group span-full">
+          <label class="form-label" for="field-oneLiner">One-Line Idea <span class="required">*</span></label>
+          <input class="form-input" type="text" id="field-oneLiner" name="oneLiner" placeholder="e.g. AI-powered legal document review for small law firms" maxlength="200" data-maxlength="200">
+          <div class="flex justify-between" style="margin-top:var(--space-1);">
+            <span class="form-error" data-error="oneLiner"></span>
+            <span class="char-count" data-charcount="field-oneLiner">0 / 200</span>
+          </div>
+        </div>
+        <div class="form-group span-full">
+          <label class="form-label" for="field-problem">Problem Statement <span class="required">*</span></label>
+          <textarea class="form-textarea" id="field-problem" name="problem" rows="3" placeholder="What specific problem are you solving? Who suffers from it, and how often?"></textarea>
+          <span class="form-error" data-error="problem"></span>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="field-targetCustomer">Target Customer <span class="required">*</span></label>
+          <input class="form-input" type="text" id="field-targetCustomer" name="targetCustomer" placeholder="e.g. Series A SaaS founders with 10-50 employees">
+          <span class="form-error" data-error="targetCustomer"></span>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="field-revenueModel">Revenue Model <span class="required">*</span></label>
+          <input class="form-input" type="text" id="field-revenueModel" name="revenueModel" placeholder="e.g. $99/month SaaS, usage-based, marketplace 10%">
+          <span class="form-error" data-error="revenueModel"></span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Step 2 -->
+    <div id="wizard-step-2" class="view-container" style="display:none;">
+      <div class="wizard-panel-title">Give us more context</div>
+      <p class="wizard-panel-subtitle">Help the AI understand your timing and background.</p>
+      <div style="display:flex;flex-direction:column;gap:var(--space-5);">
+        <div class="form-group">
+          <label class="form-label" for="field-whyNow">Why Now? <span class="required">*</span></label>
+          <textarea class="form-textarea" id="field-whyNow" name="whyNow" rows="2" placeholder="What recent change (technology, regulation, behavior) makes this the right moment?"></textarea>
+          <span class="form-error" data-error="whyNow"></span>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="field-competitors">Existing Competitors</label>
+          <textarea class="form-textarea" id="field-competitors" name="competitors" rows="2" placeholder="Who already does this? (e.g. Notion, Asana, custom in-house tools)"></textarea>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="field-founderBackground">Your Background</label>
+          <textarea class="form-textarea" id="field-founderBackground" name="founderBackground" rows="2" placeholder="Relevant experience: industry years, past startups, domain expertise..."></textarea>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--space-5);">
+          <div class="form-group">
+            <label class="form-label" for="field-customerValidation">Customer Validation</label>
+            <select class="form-select" id="field-customerValidation" name="customerValidation">
+              <option value="no">No validation yet</option>
+              <option value="informal">Informal conversations</option>
+              <option value="surveys">Surveys / landing page</option>
+              <option value="interviews">User interviews (5+)</option>
+              <option value="paying">Paying customers already</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="field-currentStage">Current Stage</label>
+            <select class="form-select" id="field-currentStage" name="currentStage">
+              <option value="idea">Idea only</option>
+              <option value="design">Design / wireframes</option>
+              <option value="prototype">Working prototype</option>
+              <option value="beta">Beta / early users</option>
+              <option value="revenue">Generating revenue</option>
+            </select>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Step 3 -->
+    <div id="wizard-step-3" class="view-container" style="display:none;">
+      <div class="wizard-panel-title">Choose your roast level</div>
+      <p class="wizard-panel-subtitle">How honest do you want the AI to be?</p>
+      <div class="roast-level-grid">
+        <label class="roast-card-option mild selected" data-value="mild">
+          <input type="radio" name="roastLevel" value="mild">
+          <div class="roast-check"></div>
+          <div class="roast-card-emoji">🌶️</div>
+          <div class="roast-card-name">Mild</div>
+          <div class="roast-card-desc">Constructive feedback. Points out issues but frames them as opportunities.</div>
+        </label>
+        <label class="roast-card-option investor" data-value="investor">
+          <input type="radio" name="roastLevel" value="investor">
+          <div class="roast-check"></div>
+          <div class="roast-card-emoji">💼</div>
+          <div class="roast-card-name">Investor Mode</div>
+          <div class="roast-card-desc">Professional pitch-meeting feedback. Direct but not destructive.</div>
+        </label>
+        <label class="roast-card-option brutal" data-value="brutal">
+          <input type="radio" name="roastLevel" value="brutal">
+          <div class="roast-check"></div>
+          <div class="roast-card-emoji">🔥</div>
+          <div class="roast-card-name">Brutal</div>
+          <div class="roast-card-desc">No sugarcoating. Every weak assumption called out. Default for serious founders.</div>
+        </label>
+        <label class="roast-card-option nuclear" data-value="nuclear">
+          <input type="radio" name="roastLevel" value="nuclear">
+          <div class="roast-check"></div>
+          <div class="roast-card-emoji">☢️</div>
+          <div class="roast-card-name">Nuclear</div>
+          <div class="roast-card-desc">Mercilessly honest. Every flaw destroyed with facts and logic. Not for the faint of heart.</div>
+        </label>
+      </div>
+
+      <div style="margin-top:var(--space-8);">
+        <label class="form-label" style="margin-bottom:var(--space-3);">AI Personality</label>
+        <p class="form-hint" style="margin-bottom:var(--space-3);">Choose which type of expert reviews your idea.</p>
+        <div class="personality-chips">
+          <label class="personality-chip selected" data-value="vc"><input type="radio" name="personality" value="vc"> 💰 Venture Capitalist</label>
+          <label class="personality-chip" data-value="yc"><input type="radio" name="personality" value="yc"> 🎓 YC Partner</label>
+          <label class="personality-chip" data-value="pm"><input type="radio" name="personality" value="pm"> 📋 Product Manager</label>
+          <label class="personality-chip" data-value="founder"><input type="radio" name="personality" value="founder"> 👨‍💻 Founder</label>
+          <label class="personality-chip" data-value="growth"><input type="radio" name="personality" value="growth"> 📈 Growth Marketer</label>
+        </div>
+      </div>
+
+      <div style="margin-top:var(--space-6);background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius-md);padding:var(--space-4);">
+        <p class="text-sm text-muted">
+          <strong style="color:var(--text-secondary);">📌 Note:</strong> This app uses the Gemini API.
+          Get a free key at <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noopener" style="color:var(--brand-primary);">aistudio.google.com</a>.
+          Without a key, a realistic demo report will be generated.
+        </p>
+      </div>
+    </div>
+
+    <!-- Navigation -->
+    <div class="wizard-nav">
+      <button class="btn btn-ghost btn-lg" id="wizard-back-btn" style="display:none;">← Back</button>
+      <div style="flex:1;"></div>
+      <button class="btn btn-primary btn-lg" id="wizard-next-btn">Continue →</button>
+      <button class="btn btn-primary btn-lg" id="wizard-submit-btn" style="display:none;">🔥 Generate My Report</button>
+    </div>
+  </div>
+</div><!-- /view-wizard -->
+
+<!-- ===== VIEW: REPORT ===== -->
+<div id="view-report" class="view-container" style="display:none;">
+  <div class="page-wrapper">
+    <div id="report-content">
+      <div class="report-loading">
+        <div class="report-loading-icon">📋</div>
+        <h2 class="report-loading-title">No report yet</h2>
+        <p class="report-loading-status">Submit your startup idea to generate a report.</p>
+        <button class="btn btn-primary btn-lg" style="margin-top:var(--space-6);" data-cta="roast">🔥 Roast My Idea</button>
+      </div>
+    </div>
+  </div>
+</div><!-- /view-report -->
+
+<!-- ===== VIEW: DASHBOARD ===== -->
+<div id="view-dashboard" class="view-container" style="display:none;">
+  <div class="page-wrapper">
+    <div class="dashboard-layout">
+      <aside class="dashboard-sidebar" role="navigation" aria-label="Dashboard navigation">
+        <div class="sidebar-section-label">Navigation</div>
+        <a class="sidebar-nav-item active" href="#" data-nav="dashboard"><span class="icon">📊</span> My Ideas</a>
+        <a class="sidebar-nav-item" href="#" data-cta="roast"><span class="icon">🔥</span> New Roast</a>
+        <a class="sidebar-nav-item" href="#" data-nav="landing"><span class="icon">🏠</span> Home</a>
+        <div class="sidebar-section-label" style="margin-top:var(--space-4);">Filter by Verdict</div>
+        <button class="sidebar-nav-item active" data-filter-verdict="all">All verdicts</button>
+        <button class="sidebar-nav-item" data-filter-verdict="GO" style="color:var(--color-go);">✅ GO</button>
+        <button class="sidebar-nav-item" data-filter-verdict="GO_WITH_CHANGES" style="color:var(--color-caution);">⚡ GO WITH CHANGES</button>
+        <button class="sidebar-nav-item" data-filter-verdict="DONT_BUILD" style="color:var(--color-stop);">🛑 DON'T BUILD</button>
+        <div class="sidebar-usage-meter" style="display:none;"></div>
+      </aside>
+
+      <main class="dashboard-main" aria-label="Saved startup ideas">
+        <div class="flex items-center justify-between gap-4" style="flex-wrap:wrap;margin-bottom:var(--space-8);">
+          <div>
+            <h1 class="text-h2 text-primary">My Ideas</h1>
+            <p class="text-sm text-secondary" style="margin-top:var(--space-1);" id="dashboard-count">0 ideas</p>
+          </div>
+          <div class="flex gap-3 items-center">
+            <select class="form-select" id="dashboard-sort" style="width:auto;padding-right:32px;">
+              <option value="date">Newest first</option>
+              <option value="score">Highest score</option>
+              <option value="name">Name A-Z</option>
+            </select>
+            <button class="btn btn-primary" data-cta="roast">🔥 New Roast</button>
+          </div>
+        </div>
+        <div id="compare-panel" style="display:none;margin-bottom:var(--space-6);background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius-lg);padding:var(--space-6);"></div>
+        <div id="dashboard-idea-grid"></div>
+        <div id="dashboard-empty" class="empty-state" style="display:none;">
+          <div class="empty-state-icon">🚀</div>
+          <h2 class="empty-state-title">No ideas yet</h2>
+          <p class="empty-state-text">Submit your first startup idea to get a brutally honest AI analysis.</p>
+          <button class="btn btn-primary btn-lg" style="margin-top:var(--space-4);" data-cta="roast">🔥 Roast My First Idea</button>
+        </div>
+      </main>
+    </div>
+  </div>
+  <div id="compare-bar" class="compare-bar" role="toolbar">
+    <span class="text-sm text-primary" style="font-weight:500;"><span id="compare-count">2</span> ideas selected</span>
+    <button class="btn btn-primary btn-sm" id="compare-bar-btn">⚡ Compare</button>
+    <button class="btn btn-ghost btn-sm" id="compare-cancel-btn">✕ Cancel</button>
+  </div>
+</div><!-- /view-dashboard -->
+
+</main><!-- /app -->
+
+<!-- ===== DIALOGS ===== -->
+<dialog class="auth-dialog" id="auth-dialog" closedby="any" aria-label="Authentication">
+  <div class="auth-dialog-inner">
+    <div style="text-align:center;padding:var(--space-8);">
+      <div class="typing-indicator" style="justify-content:center;"><span></span><span></span><span></span></div>
+    </div>
+  </div>
+</dialog>
+
+<dialog class="apikey-dialog" id="apikey-dialog" closedby="any" aria-labelledby="apikey-title">
+  <div style="padding:var(--space-8);">
+    <div style="text-align:center;margin-bottom:var(--space-6);">
+      <div style="font-size:32px;margin-bottom:var(--space-3);">🔑</div>
+      <h2 id="apikey-title" class="text-h3 text-primary">Enter Your Gemini API Key</h2>
+      <p class="text-sm text-secondary" style="margin-top:var(--space-2);">
+        IdeaRoast AI uses the Gemini API to generate reports.<br>
+        Your key is stored locally and never sent to our servers.
+      </p>
+    </div>
+    <form id="apikey-form" novalidate>
+      <div class="form-group" style="margin-bottom:var(--space-5);">
+        <label class="form-label" for="apikey-input">Gemini API Key</label>
+        <input class="form-input" type="password" id="apikey-input" name="apikey" placeholder="AIza..." autocomplete="off" spellcheck="false">
+        <span class="form-hint" style="margin-top:var(--space-2);display:block;">
+          Get a free key at <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noopener" style="color:var(--brand-primary);">aistudio.google.com</a>
+        </span>
+      </div>
+      <button type="submit" class="btn btn-primary btn-lg w-full">Save and Continue</button>
+      <button type="button" class="btn btn-ghost btn-lg w-full" style="margin-top:var(--space-3);" id="apikey-demo-btn">Use Demo Mode Instead</button>
+    </form>
+    <div style="margin-top:var(--space-5);padding:var(--space-4);background:var(--bg-elevated);border-radius:var(--radius-sm);">
+      <p class="text-xs text-muted">🔒 Your API key is stored in your browser only and never leaves your device. The Gemini free tier includes 1,500 requests/day.</p>
+    </div>
+  </div>
+</dialog>
+
+<!-- ===== SCRIPTS ===== -->
+<script src="js/auth.js"></script>
+<script src="js/ai.js"></script>
+<script src="js/wizard.js"></script>
+<script src="js/report.js"></script>
+<script src="js/dashboard.js"></script>
+<script src="js/app.js"></script>
+
+<script>
+// Override generateReport to support demo mode
+const _orig = window.AIManager.generateReport.bind(window.AIManager);
+window.AIManager.generateReport = async function(formData) {
+  const apiKey = localStorage.getItem('idearoast_apikey');
+  if (!apiKey) {
+    await new Promise(r => setTimeout(r, 3500));
+    return window.AIManager.getDemoReport(formData);
+  }
+  return _orig(formData);
+};
+
+// Demo mode button in API key dialog
+document.getElementById('apikey-demo-btn')?.addEventListener('click', () => {
+  document.getElementById('apikey-dialog')?.close();
+  window.navigateTo?.('wizard');
+});
+</script>
+
+</body>
+</html>

@@ -114,6 +114,6 @@ idearoast-ai/
 ```
 ---
 ## Testing & Verification
-1. Run `npm run build` – should complete without errors.
+1. Run `npm run build` – should complete without errors. (`npm run dev`)
 2. In dev mode, complete a wizard using demo mode and verify a report appears and can be exported as PDF.
 3. Set `VITE_GEMINI_API_KEY` in `.env` and repeat – the report should be generated from the Gemini model.
