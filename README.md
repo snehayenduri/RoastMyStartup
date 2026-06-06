@@ -1,7 +1,6 @@
 # RoastMyStartup
 # React + TypeScript + Vite
 # IdeaRoast AI
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
 **IdeaRoast AI** is a premium, AI‑powered startup validation platform. It lets founders, VCs, product managers, and growth marketers submit a three‑step startup description and receive a structured 10‑section report with a clear verdict (GO, GO WITH CHANGES, DON'T BUILD). The app showcases a modern UI built with glassmorphism, dark mode, animated cards, and real‑time progress indicators.
 Currently, two official plugins are available:
 ---
@@ -13,9 +12,9 @@ Currently, two official plugins are available:
 - Four roast levels: mild, investor, brutal, nuclear.
 - Glass‑styled UI, dark/light themes, responsive layout.
 - Local‑first storage for user session and roast limits.
-- Demo mode (no Gemini API key required) with realistic mock report.
+- Demo mode (Gemini API key required) with realistic mock report.
 - Export report as PDF and compare multiple roasts on a dashboard.
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+
 ---
 ## Expanding the ESLint configuration
 ## Prerequisites
