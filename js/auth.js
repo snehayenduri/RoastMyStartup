@@ -269,7 +269,7 @@ window.AuthManager = (function () {
       e.preventDefault();
       const key = dialog.querySelector('#apikey-input')?.value.trim();
       if (!key) {
-        window.showToast?.('Please enter a valid Gemini API key (starts with "AI")', 'error');
+        window.showToast?.('Please enter a valid OPENAI API key (starts with "AI")', 'error');
         return;
       }
       localStorage.setItem('idearoast_apikey', key);

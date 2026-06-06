@@ -259,16 +259,16 @@ const generateMockRoastReport = (
   };
 };
 
-// Main Export calling Gemini API with offline fallback
+// Main Export calling OPENAI API with offline fallback
 export const generateRoastReport = async (
   startup: Startup,
   roastLevel: 'mild' | 'investor' | 'brutal' | 'nuclear',
   personality: 'yc' | 'vc' | 'pm' | 'founder' | 'marketer'
 ): Promise<Omit<Report, 'id' | 'userId' | 'createdAt'>> => {
-  const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
+  const apiKey = import.meta.env.VITE_OPENAI_API_KEY;
 
   if (!apiKey || apiKey.includes('PLACEHOLDER') || apiKey.length < 10) {
-    console.warn('VITE_GEMINI_API_KEY not found or invalid. Falling back to offline engine.');
+    console.warn('VITE_OPENAI_API_KEY not found or invalid. Falling back to offline engine.');
     return generateMockRoastReport(startup, roastLevel, personality);
   }
 
@@ -344,44 +344,62 @@ Return a valid JSON object matching the schema below. Do NOT wrap it in markdown
 
   try {
     const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`,
+      "https://api.openai.com/v1/responses",
       {
-        method: 'POST',
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${apiKey}`
         },
         body: JSON.stringify({
-          contents: [{ parts: [{ text: userPrompt }] }],
-          systemInstruction: { parts: [{ text: systemInstructions }] },
-          generationConfig: {
-            responseMimeType: 'application/json',
-          },
-        }),
+          model: "gpt-4.1-mini",
+          input: [
+            {
+              role: "system",
+              content: systemInstructions
+            },
+            {
+              role: "user",
+              content: userPrompt
+            }
+          ],
+          temperature: 0.85,
+          max_output_tokens: 4096
+        })
       }
     );
 
     if (!response.ok) {
-      throw new Error(`Gemini API Error: Status ${response.status}`);
+      throw new Error(`OPENAI API Error: Status ${response.status}`);
     }
 
     const data = await response.json();
-    const jsonText = data?.candidates?.[0]?.content?.parts?.[0]?.text;
-    
+
+    const jsonText =
+      data?.output?.[0]?.content?.[0]?.text ||
+      data?.output_text;
+
     if (!jsonText) {
-      throw new Error('Gemini API returned an empty or invalid response structure.');
+      throw new Error("OpenAI API returned empty response structure.");
     }
 
-    const parsedReport = JSON.parse(jsonText);
+    const parsedReport = JSON.parse(
+      jsonText
+        .trim()
+        .replace(/^```json\s*/i, "")
+        .replace(/^```\s*/i, "")
+        .replace(/```\s*$/i, "")
+    );
     
     // Safety verification of parsed keys
     if (parsedReport.scorecard && parsedReport.roastSection && parsedReport.goToMarket) {
       return parsedReport;
     } else {
-      throw new Error('Parsed Gemini response missing required fields.');
+      throw new Error('Parsed OPENAI response missing required fields.');
     }
 
   } catch (error) {
-    console.error('Error generating report from Gemini API:', error);
+    console.error('Error generating report from OpenAI API:', error);
     console.log('Using offline mock fallback report.');
     return generateMockRoastReport(startup, roastLevel, personality);
   }

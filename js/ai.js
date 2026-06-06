@@ -1,10 +1,10 @@
 /* ============================================================
    IdeaRoast AI — AI JS
-   Gemini API integration, prompt templates, report generation
+   OPENAI API integration, prompt templates, report generation
    ============================================================ */
 
 window.AIManager = (function () {
-  const MODEL = 'gemini-2.0-flash';
+  const MODEL = 'gpt-4.1-mini';
 
   function getApiKey() {
     return localStorage.getItem('idearoast_apikey') || '';
@@ -143,7 +143,7 @@ CRITICAL: Respond ONLY with valid, complete JSON. No markdown, no explanation ou
 }`;
   }
 
-  // ─── Call Gemini API ──────────────────────────────────────
+  // ─── Call OPENAI API ──────────────────────────────────────
   async function generateReport(formData) {
     const apiKey = getApiKey();
     if (!apiKey) throw new Error('No API key configured');
@@ -151,48 +151,49 @@ CRITICAL: Respond ONLY with valid, complete JSON. No markdown, no explanation ou
     const prompt = buildPrompt(formData);
 
     const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent?key=${apiKey}`,
+      "https://api.openai.com/v1/responses",
       {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${apiKey}`
+        },
         body: JSON.stringify({
-          contents: [{ parts: [{ text: prompt }] }],
-          generationConfig: {
-            temperature: 0.85,
-            topP: 0.95,
-            maxOutputTokens: 4096,
-          },
-          safetySettings: [
-            { category: 'HARM_CATEGORY_HARASSMENT', threshold: 'BLOCK_NONE' },
-            { category: 'HARM_CATEGORY_HATE_SPEECH', threshold: 'BLOCK_NONE' },
-          ],
-        }),
+          model: "gpt-4.1-mini",
+          input: prompt,
+          temperature: 0.85,
+          max_output_tokens: 4096
+        })
       }
     );
 
     if (!response.ok) {
       const err = await response.json().catch(() => ({}));
-      throw new Error(err?.error?.message || `API error: ${response.status}`);
+      throw new Error(err?.error?.message || `OpenAI API error: ${response.status}`);
     }
 
     const data = await response.json();
-    const text = data?.candidates?.[0]?.content?.parts?.[0]?.text;
-    if (!text) throw new Error('Empty response from AI');
 
-    // Parse JSON from response (handle markdown code blocks)
+    const text =
+      data?.output?.[0]?.content?.[0]?.text ||
+      data?.output_text;
+
+    if (!text) throw new Error("Empty response from AI");
+
+    // clean JSON
     let jsonStr = text.trim();
-    jsonStr = jsonStr.replace(/^```json\s*/i, '').replace(/^```\s*/i, '').replace(/```\s*$/i, '');
+    jsonStr = jsonStr.replace(/^```json\s*/i, "")
+                    .replace(/^```\s*/i, "")
+                    .replace(/```\s*$/i, "");
 
     try {
       return JSON.parse(jsonStr);
     } catch (e) {
-      // Try to extract JSON from text
       const match = jsonStr.match(/\{[\s\S]*\}/);
       if (match) return JSON.parse(match[0]);
-      throw new Error('Could not parse AI response as JSON. Please try again.');
+      throw new Error("Could not parse GPT response as JSON.");
     }
   }
-
   // ─── Demo Mode (no API key) ───────────────────────────────
   function getDemoReport(formData) {
     return {

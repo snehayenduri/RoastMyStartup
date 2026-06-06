@@ -12,7 +12,7 @@ Currently, two official plugins are available:
 - Four roast levels: mild, investor, brutal, nuclear.
 - Glass‑styled UI, dark/light themes, responsive layout.
 - Local‑first storage for user session and roast limits.
-- Demo mode (Gemini API key required) with realistic mock report.
+- Demo mode (OPENAI API key required) with realistic mock report.
 - Export report as PDF and compare multiple roasts on a dashboard.
 
 ---
@@ -20,7 +20,7 @@ Currently, two official plugins are available:
 ## Prerequisites
 If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
 - Node.js (>=18) and npm (or yarn).
-- Optional: Gemini API key – get a free key from the [Google AI Studio](https://aistudio.google.com/app/apikey).
+- Optional: OPENAI API key – get a free key from the [OPENAI API](https://platform.openai.com/api-keys).
 ```js
 export default defineConfig([
   globalIgnores(['dist']),
@@ -49,11 +49,10 @@ export default defineConfig([
 ])
 ```bash
 # Navigate to the project directory
-cd /Users/snehayenduri/.gemini/antigravity/scratch/idearoast-ai
 # Install dependencies
 npm install
 # (Optional) Create a .env file for production builds
-# VITE_GEMINI_API_KEY=YOUR_GEMINI_KEY
+# VITE_OPENAI_API_KEY=YOUR_OPENAI_KEY
 # Start the dev server
 npm run dev   # Vite serves at http://localhost:5173
 ```
@@ -92,7 +91,7 @@ npm run preview # Preview the built site locally
 Deploy the contents of `dist/` to any static‑hosting service (Netlify, Vercel, Firebase Hosting, etc.).
 ---
 ## Environment Variables
-- `VITE_GEMINI_API_KEY` – Required for real AI calls. When set, the app reads the key via `import.meta.env.VITE_GEMINI_API_KEY` and no longer stores keys in `localStorage`.
+- `VITE_OPENAI_API_KEY` – Required for real AI calls. When set, the app reads the key via `import.meta.env.VITE_OPENAI_API_KEY` and no longer stores keys in `localStorage`.
 - If missing, the app automatically uses demo mode.
 ---
 ## Project Structure
@@ -115,4 +114,4 @@ idearoast-ai/
 ## Testing & Verification
 1. Run `npm run build` – should complete without errors. (`npm run dev`)
 2. In dev mode, complete a wizard using demo mode and verify a report appears and can be exported as PDF.
-3. Set `VITE_GEMINI_API_KEY` in `.env` and repeat – the report should be generated from the Gemini model.
+3. Set `VITE_OPENAI_API_KEY` in `.env` and repeat – the report should be generated from the openai model.
